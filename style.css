@@ -1,0 +1,23 @@
+@charset "utf-8";
+/* CSS Document */
+body, html {
+	padding:0;
+	margin:0;
+	overflow:hidden;
+}
+#game
+{
+	margin-left: auto;
+	margin-right: auto;
+}
+canvas {
+	position: relative;
+	width:600px;
+	height:450px;
+	image-rendering: optimizeSpeed;
+	padding: 0;
+	margin: 0;
+}
+.preloadimg {
+	display:none;
+}
