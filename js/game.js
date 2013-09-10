@@ -2,7 +2,7 @@
 var canvas = null;
 var ctx = null;
 var game = null;
-var entities = [];
+
 
 var gamewidth = 600;
 var gameheight = 450;
@@ -52,6 +52,7 @@ Game.prototype.gameOver = function() {
 };
 
 /* Game Loop */
+var fps = 30;
 var now;
 var then = Date.now();
 var interval = 1000/fps;
@@ -83,8 +84,10 @@ function draw() {
 	entities.sort(sortByLayer);
 	for (var i=0;i<entities.length;i++) {
 		if (entities[i] !== null) {
-			if (!(entities[i] instanceof Player)) entities[i].render();
-			if (game.inGame) entities[i].update();
+			if (game.inGame) {
+				entities[i].render();
+				entities[i].update();
+			}
 		}
 	}
 
@@ -92,7 +95,7 @@ function draw() {
     game.level.drawOverlay();
     ui.draw();
     ctx.restore();
-    //Clean up arrays
+    //Remove null values from arrays if they're getting too big
     if (entities.length > 400) {
 		for (var i=0;i<entities.length;i++) {
 			entities.clean(null);
@@ -127,5 +130,5 @@ function deleteEntity(e) {
 }
 
 function update() {
-	handleInteractions(); //input.js
+	handleInteractions(); //Handle input: input.js
 }

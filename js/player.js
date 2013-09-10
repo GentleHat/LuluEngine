@@ -6,6 +6,7 @@ function Player() {
 	entities.push(this);
 	this.x = 1;
 	this.y = 1;
+	this.layer = 5; //Render the player on top of other entities
 	this.rotation = 0;
 	this.lastUpdate = 0;
 	this.img = new Image();
@@ -15,7 +16,6 @@ function Player() {
 	this.scale = 1;
 	this.rotation = 180;
 	this.boundingBox = new BoundingBox(this.x,this.y,this.width,this.height);
-	this.layer = 4;
 }
 
 Player.prototype.update = function() {

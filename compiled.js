@@ -71,12 +71,17 @@ BoundingBox.prototype.destroy = function() {
 function Entity(x,y) {
 	this.x = x;
 	this.y = y;
+	this.layer = 1;
 	entities.push(this);
-}//functions.js
+}
 
-Function.prototype.inherit = function(parent) {
-  this.prototype = Object.create(parent.prototype);
+Entity.prototype.render = function() {
+
 };
+
+Entity.prototype.update = function() {
+
+};//functions.js
 
 Array.prototype.clean = function(deleteValue) {
   for (var i = 0; i < this.length; i++) {
@@ -85,7 +90,6 @@ Array.prototype.clean = function(deleteValue) {
       i--;
     }
   }
-  //return this;
 };
 
 
@@ -107,12 +111,16 @@ function random(low, high) {
   var rand = (Math.random() * high) + low;
   return rand;
 }
+
+function randomInt(low, high) {
+  return (Math.floor((Math.random() * high) + low));
+}
 var canvas = null;
 var ctx = null;
 var game = null;
 var entities = [];
 
-var gamewidth = 600;
+var gamewidth = 900;
 var gameheight = 450;
 
 //HTML onLoad event - Loading the game
@@ -160,6 +168,7 @@ Game.prototype.gameOver = function() {
 };
 
 /* Game Loop */
+var fps = 30;
 var now;
 var then = Date.now();
 var interval = 1000/fps;
@@ -362,7 +371,7 @@ function Level(num) {
 	{
 		for (var y=0;y<this.height;y++) {
 			switch(tmxloader.map.layers[1].data[y][x] - 64) { //Subtract the # of tiles on the first (tile) layer
-				case 1: new PlayerSpawn(32,32); break;
+				case 1: new PlayerSpawn(x,y); break;
 				case 2: new Entity(x,y); break;
 			}
 		}
@@ -515,6 +524,7 @@ function Player() {
 	entities.push(this);
 	this.x = 1;
 	this.y = 1;
+	this.layer = 5; //Render the player on top of other entities
 	this.rotation = 0;
 	this.lastUpdate = 0;
 	this.img = new Image();
@@ -524,7 +534,6 @@ function Player() {
 	this.scale = 1;
 	this.rotation = 180;
 	this.boundingBox = new BoundingBox(this.x,this.y,this.width,this.height);
-	this.layer = 4;
 }
 
 Player.prototype.update = function() {

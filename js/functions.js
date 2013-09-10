@@ -1,9 +1,5 @@
 //functions.js
 
-Function.prototype.inherit = function(parent) {
-  this.prototype = Object.create(parent.prototype);
-};
-
 Array.prototype.clean = function(deleteValue) {
   for (var i = 0; i < this.length; i++) {
     if (this[i] == deleteValue) {         
@@ -11,7 +7,6 @@ Array.prototype.clean = function(deleteValue) {
       i--;
     }
   }
-  //return this;
 };
 
 
@@ -32,4 +27,8 @@ function radToDeg(angle) {
 function random(low, high) {
   var rand = (Math.random() * high) + low;
   return rand;
+}
+
+function randomInt(low, high) {
+  return (Math.floor((Math.random() * high) + low));
 }
