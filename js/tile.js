@@ -23,8 +23,8 @@ Tile.prototype.render = function() {
 };
 
 function isSolidTile(x,y) {
-	if (game.level.tiles[x][y] === undefined) return;
-	if (game.level.tiles[x][y] === null) return;
-	if (game.level.tiles[x][y].solid) return true;
+	if (level.tiles[x][y] === undefined) return;
+	if (level.tiles[x][y] === null) return;
+	if (level.tiles[x][y].solid) return true;
 	else return false;
 }

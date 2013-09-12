@@ -30,16 +30,16 @@ function handleKeyDown(evt) {
 function handleKeyUp(evt) {
 	keys[evt.keyCode] = false;
 }
-$('canvas').bind('contextmenu', function(e){
+$('#canvas').bind('contextmenu', function(e){
 	//Right clicks
 	
     return false; //Disable usual context menu behaviour
 });
-$( "canvas" ).mousedown(function(event){
+$( "#canvas" ).mousedown(function(event){
     event.preventDefault();
     mouse.down = true;
 });
-$( "canvas" ).mouseup(function(event){
+$( "#canvas" ).mouseup(function(event){
     mouse.down = false;
 });
 //Function for key bindings

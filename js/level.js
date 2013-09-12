@@ -1,6 +1,6 @@
 //level.js
 
-
+var level = null;
 
 function Level(num) {
 	var fileName = 'maps/level'+num+'.tmx';
@@ -73,27 +73,27 @@ Level.prototype.fadeOut = function() {
 };
 
 function fadeInLevel() {
-	if (game.level !== null) {
-		game.level.overlayAlpha-= 0.030;
-		game.level.fadeStep++;
-		if (game.level.fadeStep < 75 && game.level.isFading) {
+	if (level !== null) {
+		level.overlayAlpha-= 0.030;
+		level.fadeStep++;
+		if (level.fadeStep < 75 && level.isFading) {
 			setTimeout(fadeInLevel, 50);
 		}
 		else {
-			game.level.isFading = false;
+			level.isFading = false;
 		}
 	}
 }
 
 function fadeOutLevel() {
-	if (game.level !== null) {
-		game.level.overlayAlpha+= 0.015;
-		game.level.fadeStep++;
-		if (game.level.fadeStep < 75 && game.level.isFading) {
+	if (level !== null) {
+		level.overlayAlpha+= 0.015;
+		level.fadeStep++;
+		if (level.fadeStep < 75 && level.isFading) {
 			setTimeout(fadeOutLevel, 50);
 		}
 		else {
-			game.level.isFading = false;
+			level.isFading = false;
 		}
 	}
 }

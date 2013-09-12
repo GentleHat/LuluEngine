@@ -67,7 +67,8 @@ BoundingBox.prototype.destroy = function() {
 	this.y = 0;
 	this.width = 0;
 	this.height = 0;
-};
+};var entities = [];
+
 function Entity(x,y) {
 	this.x = x;
 	this.y = y;
@@ -118,9 +119,9 @@ function randomInt(low, high) {
 var canvas = null;
 var ctx = null;
 var game = null;
-var entities = [];
 
-var gamewidth = 900;
+
+var gamewidth = 600;
 var gameheight = 450;
 
 //HTML onLoad event - Loading the game
@@ -140,21 +141,20 @@ $(document).ready(function() {
 });
 
 function Game() {
-	this.level = null;
 	this.currentLevel = 1;
 	this.inGame = true; //Are we physically in the game level
 }
 
 Game.prototype.start = function() {
 	this.inGame = true;
-	this.level = new Level(this.currentLevel);
-	this.level.fadeIn();
+	level = new Level(this.currentLevel);
+	level.fadeIn();
 	player = new Player();
 	screen = new Screen();
 	ui = new UI();
 };
 Game.prototype.end = function() {
-	this.level = null;
+	level = null;
 	entities = [];
 	player = null;
 	screen = null;
@@ -192,24 +192,26 @@ function draw() {
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	ctx.save();
 	ui.draw();
-	game.level.update();
-	renderLevel(game.level);
+	level.update();
+	renderLevel(level);
 	screen.scroll();
 
 	//Sort entities by layer property before rendering
 	entities.sort(sortByLayer);
 	for (var i=0;i<entities.length;i++) {
 		if (entities[i] !== null) {
-			if (!(entities[i] instanceof Player)) entities[i].render();
-			if (game.inGame) entities[i].update();
+			if (game.inGame) {
+				entities[i].render();
+				entities[i].update();
+			}
 		}
 	}
 
     player.render();
-    game.level.drawOverlay();
+    level.drawOverlay();
     ui.draw();
     ctx.restore();
-    //Clean up arrays
+    //Remove null values from arrays if they're getting too big
     if (entities.length > 400) {
 		for (var i=0;i<entities.length;i++) {
 			entities.clean(null);
@@ -244,7 +246,7 @@ function deleteEntity(e) {
 }
 
 function update() {
-	handleInteractions(); //input.js
+	handleInteractions(); //Handle input: input.js
 }
 //input.js
 
@@ -278,16 +280,16 @@ function handleKeyDown(evt) {
 function handleKeyUp(evt) {
 	keys[evt.keyCode] = false;
 }
-$('canvas').bind('contextmenu', function(e){
+$('#canvas').bind('contextmenu', function(e){
 	//Right clicks
 	
     return false; //Disable usual context menu behaviour
 });
-$( "canvas" ).mousedown(function(event){
+$( "#canvas" ).mousedown(function(event){
     event.preventDefault();
     mouse.down = true;
 });
-$( "canvas" ).mouseup(function(event){
+$( "#canvas" ).mouseup(function(event){
     mouse.down = false;
 });
 //Function for key bindings
@@ -342,7 +344,7 @@ $("#canvas").click(function(e){
 
 //level.js
 
-
+var level = null;
 
 function Level(num) {
 	var fileName = 'maps/level'+num+'.tmx';
@@ -415,27 +417,27 @@ Level.prototype.fadeOut = function() {
 };
 
 function fadeInLevel() {
-	if (game.level !== null) {
-		game.level.overlayAlpha-= 0.030;
-		game.level.fadeStep++;
-		if (game.level.fadeStep < 75 && game.level.isFading) {
+	if (level !== null) {
+		level.overlayAlpha-= 0.030;
+		level.fadeStep++;
+		if (level.fadeStep < 75 && level.isFading) {
 			setTimeout(fadeInLevel, 50);
 		}
 		else {
-			game.level.isFading = false;
+			level.isFading = false;
 		}
 	}
 }
 
 function fadeOutLevel() {
-	if (game.level !== null) {
-		game.level.overlayAlpha+= 0.015;
-		game.level.fadeStep++;
-		if (game.level.fadeStep < 75 && game.level.isFading) {
+	if (level !== null) {
+		level.overlayAlpha+= 0.015;
+		level.fadeStep++;
+		if (level.fadeStep < 75 && level.isFading) {
 			setTimeout(fadeOutLevel, 50);
 		}
 		else {
-			game.level.isFading = false;
+			level.isFading = false;
 		}
 	}
 }
@@ -571,11 +573,11 @@ Player.prototype.move = function(xm,ym) {
 
 	var canMove = true;
 	//Collision with solid tiles
-	for (var x=0;x<game.level.width;x++)
+	for (var x=0;x<level.width;x++)
 	{
-		for (var y=0;y<game.level.height;y++) {
-			if (game.level.tiles[x][y].solid) {
-				if (this.boundingBox.wouldCollide(xm,ym,game.level.tiles[x][y])) {
+		for (var y=0;y<level.height;y++) {
+			if (level.tiles[x][y].solid) {
+				if (this.boundingBox.wouldCollide(xm,ym,level.tiles[x][y])) {
 					canMove = false;
 				}
 			}
@@ -638,8 +640,8 @@ function Screen() {
 	this.yOffset = 0;
 	this.width = gamewidth;
 	this.height = gameheight;
-	this.maxXOffset = game.level.width * 32 * -1;
-	this.maxYOffset = game.level.height * 32 * -1;
+	this.maxXOffset = level.width * 32 * -1;
+	this.maxYOffset = level.height * 32 * -1;
 }
 
 Screen.prototype.scroll = function() {
@@ -705,9 +707,9 @@ Tile.prototype.render = function() {
 };
 
 function isSolidTile(x,y) {
-	if (game.level.tiles[x][y] === undefined) return;
-	if (game.level.tiles[x][y] === null) return;
-	if (game.level.tiles[x][y].solid) return true;
+	if (level.tiles[x][y] === undefined) return;
+	if (level.tiles[x][y] === null) return;
+	if (level.tiles[x][y].solid) return true;
 	else return false;
 }
 /**

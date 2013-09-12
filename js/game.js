@@ -24,21 +24,20 @@ $(document).ready(function() {
 });
 
 function Game() {
-	this.level = null;
 	this.currentLevel = 1;
 	this.inGame = true; //Are we physically in the game level
 }
 
 Game.prototype.start = function() {
 	this.inGame = true;
-	this.level = new Level(this.currentLevel);
-	this.level.fadeIn();
+	level = new Level(this.currentLevel);
+	level.fadeIn();
 	player = new Player();
 	screen = new Screen();
 	ui = new UI();
 };
 Game.prototype.end = function() {
-	this.level = null;
+	level = null;
 	entities = [];
 	player = null;
 	screen = null;
@@ -76,8 +75,8 @@ function draw() {
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	ctx.save();
 	ui.draw();
-	game.level.update();
-	renderLevel(game.level);
+	level.update();
+	renderLevel(level);
 	screen.scroll();
 
 	//Sort entities by layer property before rendering
@@ -92,7 +91,7 @@ function draw() {
 	}
 
     player.render();
-    game.level.drawOverlay();
+    level.drawOverlay();
     ui.draw();
     ctx.restore();
     //Remove null values from arrays if they're getting too big

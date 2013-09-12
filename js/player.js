@@ -53,11 +53,11 @@ Player.prototype.move = function(xm,ym) {
 
 	var canMove = true;
 	//Collision with solid tiles
-	for (var x=0;x<game.level.width;x++)
+	for (var x=0;x<level.width;x++)
 	{
-		for (var y=0;y<game.level.height;y++) {
-			if (game.level.tiles[x][y].solid) {
-				if (this.boundingBox.wouldCollide(xm,ym,game.level.tiles[x][y])) {
+		for (var y=0;y<level.height;y++) {
+			if (level.tiles[x][y].solid) {
+				if (this.boundingBox.wouldCollide(xm,ym,level.tiles[x][y])) {
 					canMove = false;
 				}
 			}

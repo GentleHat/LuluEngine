@@ -5,8 +5,8 @@ function Screen() {
 	this.yOffset = 0;
 	this.width = gamewidth;
 	this.height = gameheight;
-	this.maxXOffset = game.level.width * 32 * -1;
-	this.maxYOffset = game.level.height * 32 * -1;
+	this.maxXOffset = level.width * 32 * -1;
+	this.maxYOffset = level.height * 32 * -1;
 }
 
 Screen.prototype.scroll = function() {
