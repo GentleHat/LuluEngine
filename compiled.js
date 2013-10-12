@@ -77,7 +77,9 @@ function Entity(x,y) {
 }
 
 Entity.prototype.render = function() {
-
+	if (this.sprite !== undefined) {
+		this.sprite.render(1,1);
+	}
 };
 
 Entity.prototype.update = function() {
@@ -143,6 +145,7 @@ $(document).ready(function() {
 function Game() {
 	this.currentLevel = 1;
 	this.inGame = true; //Are we physically in the game level
+	this.start();
 }
 
 Game.prototype.start = function() {
@@ -188,6 +191,7 @@ function loop()
 
 function draw() {
 	if (screen === null) return;
+
 	ctx.fillStyle = "#000";
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	ctx.save();
@@ -212,6 +216,7 @@ function draw() {
     ui.draw();
     ctx.restore();
     //Remove null values from arrays if they're getting too big
+    //Note: Right now this will be inefficient if there are more than 400 valid entities/particles in existance.
     if (entities.length > 400) {
 		for (var i=0;i<entities.length;i++) {
 			entities.clean(null);
@@ -682,7 +687,26 @@ Screen.prototype.setOffset = function(x,y) {
 
 if (AudioFX.supported) {
 	var sound = AudioFX('sounds/soundfile', { formats: ['wav'], pool:2, volume:0.5});
-}//tile.js
+}function Sprite(img) {
+	this.img = new Image();
+	this.img.src = img;
+	this.scale = 1;
+	this.xOffset = 0;
+	this.yOffset = 0;
+	this.width = 30;
+	this.height = 30;
+	this.loaded = false;
+	var _this = this;
+	this.img.onload = function() {
+		_this.loaded = true;
+		_this.width = _this.img.width;
+		_this.height = _this.img.height;
+	};
+}
+
+Sprite.prototype.render = function(x,y) {
+	ctx.drawImage(this.img, this.xOffset, this.yOffset, this.width-this.xOffset, this.height-this.yOffset, x, y, this.width*this.scale, this.width*this.scale);
+};//tile.js
 
 var r=0,g=0,b=0;
 var tileSheet = new Image();

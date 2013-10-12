@@ -26,6 +26,7 @@ $(document).ready(function() {
 function Game() {
 	this.currentLevel = 1;
 	this.inGame = true; //Are we physically in the game level
+	this.start();
 }
 
 Game.prototype.start = function() {
@@ -71,6 +72,7 @@ function loop()
 
 function draw() {
 	if (screen === null) return;
+
 	ctx.fillStyle = "#000";
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	ctx.save();
@@ -95,6 +97,7 @@ function draw() {
     ui.draw();
     ctx.restore();
     //Remove null values from arrays if they're getting too big
+    //Note: Right now this will be inefficient if there are more than 400 valid entities/particles in existance.
     if (entities.length > 400) {
 		for (var i=0;i<entities.length;i++) {
 			entities.clean(null);
