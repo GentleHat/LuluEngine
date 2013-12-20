@@ -78,7 +78,7 @@ function Entity(x,y) {
 
 Entity.prototype.render = function() {
 	if (this.sprite !== undefined) {
-		this.sprite.render(1,1);
+		this.sprite.render(this.x,this.y);
 	}
 };
 
@@ -693,20 +693,26 @@ if (AudioFX.supported) {
 	this.scale = 1;
 	this.xOffset = 0;
 	this.yOffset = 0;
-	this.width = 30;
-	this.height = 30;
+	this.width = 180;
+	this.height = 327;
 	this.loaded = false;
 	var _this = this;
 	this.img.onload = function() {
 		_this.loaded = true;
-		_this.width = _this.img.width;
-		_this.height = _this.img.height;
+		//0_this.width = _this.img.width;
+		//_this.height = _this.img.height;
 	};
 }
 
 Sprite.prototype.render = function(x,y) {
-	ctx.drawImage(this.img, this.xOffset, this.yOffset, this.width-this.xOffset, this.height-this.yOffset, x, y, this.width*this.scale, this.width*this.scale);
-};//tile.js
+	ctx.drawImage(this.img, this.xOffset, this.yOffset, this.width, this.height, x, y, this.width*this.scale, this.width*this.scale);
+	this.xOffset += 180;
+	if (this.xOffset >= 1134) this.xOffset = 0;
+};
+
+var player = new Entity(1,1);
+player.sprite = new Sprite("img/sprite.png");
+//tile.js
 
 var r=0,g=0,b=0;
 var tileSheet = new Image();

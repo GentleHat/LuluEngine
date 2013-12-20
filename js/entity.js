@@ -8,7 +8,9 @@ function Entity(x,y) {
 }
 
 Entity.prototype.render = function() {
-
+	if (this.sprite !== undefined) {
+		this.sprite.render(this.x,this.y);
+	}
 };
 
 Entity.prototype.update = function() {
