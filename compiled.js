@@ -67,32 +67,21 @@ BoundingBox.prototype.destroy = function() {
 	this.y = 0;
 	this.width = 0;
 	this.height = 0;
-};var entities = [];
-
-function Entity(x,y) {
-	this.x = x;
-	this.y = y;
-	this.layer = 1;
-	entities.push(this);
-}
-
-Entity.prototype.render = function() {
-	if (this.sprite !== undefined) {
-		this.sprite.render(this.x,this.y);
-	}
-};
-
-Entity.prototype.update = function() {
-
-};//functions.js
+};function FPSManager() {
+	this.fps = 30;
+	this.now = null;
+	this.then = Date.now();
+	this.interval = 1000 / this.fps;
+	this.delta = null;
+}//functions.js
 
 Array.prototype.clean = function(deleteValue) {
-  for (var i = 0; i < this.length; i++) {
-    if (this[i] == deleteValue) {         
-      this.splice(i, 1);
-      i--;
-    }
-  }
+	for (var i = 0; i < this.length; i++) {
+		if (this[i] == deleteValue) {
+			this.splice(i, 1);
+			i--;
+		}
+	}
 };
 
 
@@ -103,283 +92,311 @@ function getCurrentMs() {
 }
 
 function degToRad(angle) {
-  return ((angle*Math.PI) / 180);
+	return ((angle * Math.PI) / 180);
 }
 
 function radToDeg(angle) {
-  return ((angle*180) / Math.PI);
+	return ((angle * 180) / Math.PI);
 }
 
 function random(low, high) {
-  var rand = (Math.random() * high) + low;
-  return rand;
+	var rand = (Math.random() * high) + low;
+	return rand;
 }
 
 function randomInt(low, high) {
-  return (Math.floor((Math.random() * high) + low));
-}
-var canvas = null;
+	return (Math.floor((Math.random() * high) + low));
+}var canvas = null;
 var ctx = null;
-var game = null;
 
-
-var gamewidth = 600;
-var gameheight = 450;
+var Game = null; //Game engine variable
 
 //HTML onLoad event - Loading the game
 $(document).ready(function() {
 	canvas = document.getElementById('canvas');
-	canvas.width = gamewidth;
-	canvas.height = gameheight;
+	canvas.width = 600;
+	canvas.height = 450;
 	//check whether browser supports getting canvas context
 	if (canvas && canvas.getContext) {
 		ctx = canvas.getContext('2d');
-		ctx.fillStyle="#000";
-		ctx.fillRect(0,0,canvas.width,canvas.height);
+		ctx.fillStyle = "#000";
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		$(window).focus();
 	}
 
-	game = new Game();
+	Game = new GameEngine();
+	Game.loader.load();
 	loop();
+	Game.start();
 });
 
-function Game() {
+
+function GameEngine() {
+	this.settings = new Settings();
+	this.ui = new UI();
+	this.loader = new AssetLoader();
+	this.fpsManager = new FPSManager();
+	this.sound = new SoundManager();
+	this.particles = new ParticleManager();
+	this.started = true;
+	this.level = null;
+	this.input = new InputManager();
 	this.currentLevel = 1;
 	this.inGame = true; //Are we physically in the game level
-	this.start();
+	this.inMenu = false;
+	this.loaded = false;
+	this.entities = [];
 }
-
-Game.prototype.start = function() {
+GameEngine.prototype.toggleSound = function() {
+	if (this.settings.sound) this.settings.sound = false;
+	else this.settings.sound = true;
+};
+GameEngine.prototype.toggleParticles = function() {
+	if (this.settings.particles) this.settings.particles = false;
+	else this.settings.particles = true;
+};
+GameEngine.prototype.start = function() {
+	this.started = true;
 	this.inGame = true;
-	level = new Level(this.currentLevel);
-	level.fadeIn();
-	player = new Player();
-	screen = new Screen();
-	ui = new UI();
+	this.inMenu = false;
+	this.level = new Level(this.currentLevel);
+	this.level.fadeIn();
+	this.player = new Player();
+	this.ui = new UI();
+	this.screen = new Screen();
 };
-Game.prototype.end = function() {
-	level = null;
-	entities = [];
-	player = null;
-	screen = null;
-	ui = null;
+GameEngine.prototype.end = function() {
+	this.started = false;
+	this.level = null;
+	this.inMenu = true;
+	this.entities = [];
+	this.player = null;
+	this.screen = null;
+	this.ui = null;
 };
 
-Game.prototype.gameOver = function() {
+GameEngine.prototype.gameOver = function() {
 	this.inGame = false;
 	this.level.fadeOut();
-	setTimeout("game.end();",4800); //After level fadeout do game.end()
+	setTimeout("game.end();", 4800); //After level fadeout do game.end()
 };
 
 /* Game Loop */
-var fps = 30;
-var now;
-var then = Date.now();
-var interval = 1000/fps;
-var delta;
 
-function loop()
-{
-	requestAnimationFrame(loop);
-    now = Date.now();
-    delta = now - then;
-    if (delta > interval) {
-		then = now - (delta % interval);
-		draw();
-		update();
-    }
+function loop() {
+	Game.loop();
 }
 
-function draw() {
-	if (screen === null) return;
+GameEngine.prototype.loop = function() {
+	requestAnimationFrame(loop);
+	this.fpsManager.now = Date.now();
+	this.fpsManager.delta = this.fpsManager.now - this.fpsManager.then;
+	if (this.fpsManager.delta > this.fpsManager.interval) {
+		this.fpsManager.then = this.fpsManager.now - (this.fpsManager.delta % this.fpsManager.interval);
+		this.render();
+	}
+};
 
-	ctx.fillStyle = "#000";
+GameEngine.prototype.render = function() {
+	if (!this.loaded) {
+		this.ui.drawLoadingScreen();
+		if (this.loader.getLoadPercent() == 100) {
+			this.loaded = true;
+			return;
+		}
+	}
+	if (this.screen === null || this.screen === undefined) return;
+	ctx.restore();
+	ctx.fillStyle = "rgba(44, 0, 0)";
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	ctx.save();
-	ui.draw();
-	level.update();
-	renderLevel(level);
-	screen.scroll();
 
-	//Sort entities by layer property before rendering
-	entities.sort(sortByLayer);
-	for (var i=0;i<entities.length;i++) {
-		if (entities[i] !== null) {
-			if (game.inGame) {
-				entities[i].render();
-				entities[i].update();
-			}
+	this.ui.draw();
+	renderLevel(this.level);
+	Game.screen.scroll();
+	this.entities.sort(sortByEntityLayer);
+	for (var i = 0; i < this.entities.length; i++) {
+		if (this.entities[i] !== null) {
+			if (!(this.entities[i] instanceof Player)) this.entities[i].render();
+			if (this.inGame) this.entities[i].update();
 		}
 	}
+	this.particles.drawParticles();
+	this.player.render();
 
-    player.render();
-    level.drawOverlay();
-    ui.draw();
-    ctx.restore();
-    //Remove null values from arrays if they're getting too big
-    //Note: Right now this will be inefficient if there are more than 400 valid entities/particles in existance.
-    if (entities.length > 400) {
-		for (var i=0;i<entities.length;i++) {
-			entities.clean(null);
+
+	this.ui.draw();
+
+	//Clean up arrays
+	if (this.entities.length > 500) {
+		for (var i = 0; i < this.entities.length; i++) {
+			this.entities.clean(null);
 		}
 	}
-	if (particles.length > 400) {
-		for (var i=0;i<particles.length;i++) {
-			particles.clean(null);
+	if (this.particles.length > 300) {
+		for (var i = 0; i < this.particles.length; i++) {
+			this.particles.clean(null);
 		}
 	}
-}
+	this.level.update();
+	this.input.handleInteractions();
+};
 
-function sortByLayer(a,b) {
+
+
+GameEngine.prototype.deleteEntity = function(e) {
+	for (var i = 0; i < this.entities.length; i++) {
+		if (this.entities[i] === e) {
+			this.entities[i] = null;
+			break;
+		}
+	}
+};
+
+GameEngine.prototype.debugMsg = function(str) {
+	console.log("LuluEngine: " + str);
+};
+
+function sortByEntityLayer(a, b) {
 	if (a === null) return 1;
 	if (b === null) return -1;
 	if (a.layer === undefined) a.layer = 0;
 	if (b.layer === undefined) b.layer = 0;
-  if (a.layer < b.layer)
-     return -1;
-  if (a.layer > b.layer)
-    return 1;
-  return 0;
+	if (a.layer < b.layer)
+		return -1;
+	if (a.layer > b.layer)
+		return 1;
+	return 0;
+}function InputManager() {
+	this.mouse = new Mouse();
+	this.keys = [];
 }
 
-function deleteEntity(e) {
-	for (var i=0;i<entities.length;i++) {
-		if (entities[i] === e) {
-			entities[i] = null; //Just null the value, it will be removed once the array gets too big
-			break;
-		}
-	}
-}
-
-function update() {
-	handleInteractions(); //Handle input: input.js
-}
-//input.js
-
-/* Interactivity */
-
-$(window).load(function() {
-	window.focus(); //Implemented using window instead of canvas to work in iframes (such as Kongregate)
-	$(window).keydown(function(evt) {
-		keys[evt.keyCode] = true;
-	});
-	$(window).keyup(function(evt) {
-		keys[evt.keyCode] = false;
-	});
-});
-
-var keys = [];
 function Mouse() {
 	this.x = 0;
 	this.y = 0;
 	this.down = false;
 }
-var mouse = new Mouse();
+
+InputManager.prototype.handleInteractions = function() {
+	if (Game.player === null) return;
+	if (this.keys[38] || this.keys[87]) { //Up arrow
+		Game.player.move(0, -2);
+	}
+	if (this.keys[37] || this.keys[65]) { //Left Arrow
+		Game.player.move(-2, 0);
+	}
+	if (this.keys[39] || this.keys[68]) { //right arrow
+		Game.player.move(2, 0);
+	}
+	if (this.keys[40] || this.keys[83]) { //down arrow
+		Game.player.move(0, 2);
+	}
+	if (this.keys[32]) { //spacebar
+
+	}
+	if (this.keys[69]) { //e
+
+	}
+	if (this.keys[70]) { //f
+
+	}
+	if (this.keys[71]) { //g
+
+	}
+	if (this.keys[82]) { //r
+
+	}
+};
+
+$(window).load(function() {
+	window.focus();
+	$(window).keydown(function(evt) {
+		Game.input.keys[evt.keyCode] = true;
+	});
+	$(window).keyup(function(evt) {
+		Game.input.keys[evt.keyCode] = false;
+	});
+});
+
 //Disable browsers usual function of scrolling with up/down arrow keys
-document.onkeydown=function(){return event.keyCode!=38 && event.keyCode!=40 && event.keyCode!=32}
+document.onkeydown = function(event) {
+	return event.keyCode != 38 && event.keyCode != 40 && event.keyCode != 32;
+};
 
-
-
-function handleKeyDown(evt) {
-	keys[evt.keyCode] = true;
-}
-function handleKeyUp(evt) {
-	keys[evt.keyCode] = false;
-}
-$('#canvas').bind('contextmenu', function(e){
-	//Right clicks
-	
-    return false; //Disable usual context menu behaviour
+$('#canvas').bind('contextmenu', function(e) {
+	//Right click callback
+	return false; //Disable usual context menu behaviour
 });
-$( "#canvas" ).mousedown(function(event){
-    event.preventDefault();
-    mouse.down = true;
+$("#canvas").mousedown(function(event) {
+	event.preventDefault();
+	Game.input.mouse.down = true;
 });
-$( "#canvas" ).mouseup(function(event){
-    mouse.down = false;
+$("#canvas").mouseup(function(event) {
+	Game.input.mouse.down = false;
 });
-//Function for key bindings
-function handleInteractions() {
-	if (player === null) return;
-	if (keys[38] || keys[87]) { //Up arrow OR W
-		player.move(0,-2);
-	}
-	if (keys[37] || keys[65]) { //Left Arrow OR A
-		player.move(-2,0);
-	}
-	if (keys[39] || keys[68]) { //right arrow OR D
-		player.move(2,0);
-	}
-	if (keys [40] || keys[83]) { //down arrow OR S
-		player.move(0,2);
-	}
-	if (keys [32]) { //spacebar
-		
-	}
-	if (keys[69]) { //E
-		
-	}
-	if (keys[70]) { //F
-		
-	}
-	if (keys[71]) { //G
-		
-	}
-	if (keys[82]) { //R
-		
-	}
-
-}
 
 //Mouse movement
-$('#canvas').mousemove(function(e){
-    mouse.x = e.pageX - this.offsetLeft,
-    mouse.y = e.pageY - this.offsetTop;
-    if (game === null) return;
-    if (screen !== null) {
-    	mouse.x += screen.xOffset;
-		mouse.y += screen.yOffset;
-    }
+$('#canvas').mousemove(function(e) {
+	Game.input.mouse.x = e.pageX - this.offsetLeft;
+	Game.input.mouse.y = e.pageY - this.offsetTop;
+	if (Game === null) return;
+	if (Game.screen !== null) {
+		//mouse.x += screen.xOffset;
+		//mouse.y += screen.yOffset;
+	}
 });
-
 
 //Mouse clicks hook
-$("#canvas").click(function(e){
+$("#canvas").click(function(e) {
 	window.focus();
-});
-
-//level.js
-
-var level = null;
-
-function Level(num) {
-	var fileName = 'maps/level'+num+'.tmx';
+});function Level(num) {
+	var fileName = 'maps/level' + num + '.tmx';
 	tmxloader.load(fileName);
 
 	this.tiles = [];
 	this.xOffset = 0;
 	this.yOffset = 0;
 	this.width = tmxloader.map.width;
-	this.height =  tmxloader.map.height;
+	this.height = tmxloader.map.height;
 	this.overlayAlpha = 0;
 	this.fadeStep = 0;
 	this.isFading = false;
 	this.levelTime = 0;
 	this.lastUpdate = 0;
 
-	for (var x=0;x<this.width;x++)
-	{
+	for (var x = 0; x < this.width; x++) {
 		this.tiles[x] = [];
-		for (var y=0;y<this.height;y++) {
-			this.tiles[x][y] = new Tile(x*32,y*32,tmxloader.map.layers[0].data[y][x]); //Tile layer
+		for (var y = 0; y < this.height; y++) {
+			this.tiles[x][y] = new Tile(x * 32, y * 32, tmxloader.map.layers[0].data[y][x]); //Tile layer
 		}
 	}
 
-	for (var x=0;x<this.width;x++)
-	{
-		for (var y=0;y<this.height;y++) {
-			switch(tmxloader.map.layers[1].data[y][x] - 64) { //Subtract the # of tiles on the first (tile) layer
-				case 1: new PlayerSpawn(x,y); break;
-				case 2: new Entity(x,y); break;
+	for (var x = 0; x < this.width; x++) {
+		for (var y = 0; y < this.height; y++) {
+			switch (tmxloader.map.layers[1].data[y][x] - 64) { //Subtract the # of tiles on the first (tile) layer
+				case 1:
+					new PlayerSpawn(x, y);
+					break;
+			}
+		}
+	}
+	new PlayerSpawn(64, 64);
+}
+
+Level.prototype.update = function() {
+	if (getCurrentMs() - this.lastUpdate > 1) {
+		this.levelTime++;
+		this.lastUpdate = getCurrentMs();
+	}
+};
+
+function renderLevel(level) {
+	for (var x = 0; x < Game.level.width; x++) { //These ifs check to render tiles only on screen based on pixel values of screen size
+		if (x > (((Game.screen.xOffset + 32 - (Game.screen.xOffset % 32)) / 32) * -1) && x < (((Game.screen.xOffset - 600 - 32 - (Game.screen.xOffset % 32)) / 32) * -1)) {
+			for (var y = 0; y < Game.level.height; y++) {
+				if (y > (((Game.screen.yOffset + 32 - (Game.screen.yOffset % 32)) / 32) * -1) && y < (((Game.screen.yOffset - 450 - 32 - (Game.screen.yOffset % 32)) / 32) * -1))
+					Game.level.tiles[x][y].render();
 			}
 		}
 	}
@@ -392,22 +409,8 @@ Level.prototype.update = function() {
 	}
 };
 
-function renderLevel(level) {
-	for (var x=0;x<level.width;x++) { //These ifs check to render tiles only on screen based on pixel values of screen size
-		if (x > (((screen.xOffset + 32 - (screen.xOffset % 32)) / 32) * -1) && x < (((screen.xOffset - gamewidth - 32 - (screen.xOffset % 32)) / 32) * -1)) {
-			for (var y=0;y<level.height;y++) {
-				if (y > (((screen.yOffset + 32 - (screen.yOffset % 32)) / 32) * -1) && y < (((screen.yOffset - gameheight - 32 - (screen.yOffset % 32)) / 32) * -1))
-					level.tiles[x][y].render();
-			}
-		}
-	}
-}
-
-Level.prototype.start = function() {
-	//TODO: Fade in the level
-};
-
 Level.prototype.fadeIn = function() {
+	//ambience1.play();
 	this.overlayAlpha = 1;
 	this.isFading = true;
 	this.fadeStep = 0;
@@ -415,46 +418,100 @@ Level.prototype.fadeIn = function() {
 };
 
 Level.prototype.fadeOut = function() {
+	Game.sound.ambience1.stop();
 	this.overlayAlpha = 0;
 	this.isFading = true;
 	this.fadeStep = 0;
-	setTimeout(fadeOutLevel,50);
+	setTimeout(fadeOutLevel, 50);
 };
 
 function fadeInLevel() {
-	if (level !== null) {
-		level.overlayAlpha-= 0.030;
-		level.fadeStep++;
-		if (level.fadeStep < 75 && level.isFading) {
+	if (Game.level !== null) {
+		Game.level.overlayAlpha -= 0.030;
+		Game.level.fadeStep++;
+		if (Game.level.fadeStep < 75 && Game.level.isFading) {
 			setTimeout(fadeInLevel, 50);
-		}
-		else {
-			level.isFading = false;
+		} else {
+			Game.level.isFading = false;
 		}
 	}
 }
 
 function fadeOutLevel() {
-	if (level !== null) {
-		level.overlayAlpha+= 0.015;
-		level.fadeStep++;
-		if (level.fadeStep < 75 && level.isFading) {
+	if (Game.level !== null) {
+		Game.level.overlayAlpha += 0.015;
+		Game.level.fadeStep++;
+		if (Game.level.fadeStep < 75 && Game.level.isFading) {
 			setTimeout(fadeOutLevel, 50);
-		}
-		else {
-			level.isFading = false;
+		} else {
+			Game.level.isFading = false;
 		}
 	}
 }
 
 Level.prototype.drawOverlay = function() {
-	ctx.fillStyle = "rgba(0, 0, 0, "+this.overlayAlpha+")";
-	ctx.fillRect(0,0,gamewidth,gameheight);
+	ctx.fillStyle = "rgba(0, 0, 0, " + this.overlayAlpha + ")";
+	ctx.fillRect(0, 0, 600, 450);
+};function AssetLoader() {
+	//this.callback = callback;
+	this.assets = [
+		"img/player.png"
+	];
+	this.assetsLoaded = 0;
+	this.totalAssets = 1;
+}
+
+AssetLoader.prototype.load = function() {
+	var _this = this;
+	for (var i = 0; i < this.assets.length; i++) {
+		if (this.assets[i].indexOf(".png" != -1)) {
+			var img = new Image();
+			img.src = this.assets[i];
+			img.onload = function() {
+				_this.assetsLoaded++;
+				console.log("Assets loaded:" + _this.assetsLoaded);
+			};
+		}
+	}
 };
-var particles = [];
 
+AssetLoader.prototype.getLoadPercent = function() {
+	var percent = (this.assetsLoaded / this.totalAssets) * 100;
+	if (percent > 100) percent = 100;
+	if (percent < 0) percent = 0;
+	if (isNaN(percent)) percent = 0;
+	return percent;
+};function ParticleManager() {
+	this.particles = [];
+}
 
-function Particle(x,y,r,g,b,angle,speed,friction,alpha,decay, lifetime) {
+ParticleManager.prototype.drawParticles = function() {
+	for (var i = 0; i < this.particles.length; i++) {
+		this.particles[i].render();
+		this.particles[i].update();
+	}
+};
+
+ParticleManager.prototype.deleteParticle = function(p) {
+	for (var i = 0; i < this.particles.length; i++) {
+		if (this.particles[i] == p) {
+			this.particles.splice(i, 1);
+			break;
+		}
+	}
+};
+
+//Particle System - Red blood particles that fade out
+ParticleManager.prototype.createBloodParticles = function(x, y) {
+	var particleCount = Math.floor((Math.random() * 25)) + 5;
+	while (particleCount--) {
+		this.particles.push(new Particle(x, y, 122, 7, 1, random(0, Math.PI * 2), random(0.3, 2.5), 0.8, 0.9, 0.9, 30));
+	}
+};
+
+/* Particle Object */
+
+function Particle(x, y, r, g, b, angle, speed, friction, alpha, decay, lifetime) {
 	this.x = x;
 	this.y = y;
 	this.lifeTime = lifetime;
@@ -470,128 +527,100 @@ function Particle(x,y,r,g,b,angle,speed,friction,alpha,decay, lifetime) {
 	this.alpha = alpha;
 	this.decay = decay;
 	while (this.coordinateCount--) {
-		this.coordinates.push([this.x,this.y]);
+		this.coordinates.push([this.x, this.y]);
 	}
-	particles.push(this);
+	Game.particles.particles.push(this);
 }
 
 Particle.prototype.render = function() {
-	if (!game.particles) return;
+	if (!Game.settings.particles) return;
+	//TODO: Do not render offscreen particles. An onscreen check may be too costly, perhaps don't create them if offscreen?
+	//Will have to look into the best way to do this. Reducing the number of particles is also a perf optimization possibility
+	//Upper limit on number of particles perhaps?
 	//ctx.beginPath();
-	//move to the last tracked coordinates in the set, then draw a line to the current x and y
+	// move to the last tracked coordinates in the set, then draw a line to the current x and y
 	//ctx.moveTo( this.coordinates[ this.coordinates.length - 1 ][ 0 ], this.coordinates[ this.coordinates.length - 1 ][ 1 ] );
 	//ctx.lineTo( this.x+screen.xOffset, this.y+screen.yOffset );
-	ctx.fillStyle = 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + this.alpha  + ');';
-	ctx.fillRect(this.x+screen.xOffset,this.y+screen.yOffset, 2,2);
+	ctx.fillStyle = "#B21";
+	ctx.fillStyle = 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + this.alpha + ');';
+	//ctx.beginPath();
+	//ctx.arc(this.x+screen.xOffset,this.y+screen.yOffset, 9, 0, 2 * Math.PI, false);
+	ctx.fillRect(this.x + Game.screen.xOffset, this.y + Game.screen.yOffset, 2, 2);
+	//ctx.fill();
 };
 
 Particle.prototype.update = function() {
-	if (!game.particles) return;
+	if (!Game.settings.particles) return;
 	this.coordinates.pop();
-	this.coordinates.unshift( [ this.x, this.y ] );
-	this.x += Math.cos( this.angle ) * this.speed;
-	this.y += Math.sin( this.angle ) * this.speed;
+	this.coordinates.unshift([this.x, this.y]);
+	this.x += Math.cos(this.angle) * this.speed;
+	this.y += Math.sin(this.angle) * this.speed;
 	this.alpha *= this.decay;
 	this.speed *= this.friction;
 	this.timeAlive++;
 	if (this.timeAlive >= this.lifeTime) {
-		deleteParticle(this);
+		Game.particles.deleteParticle(this);
 	}
-};
-
-function createParticleSystem(x,y) {
-	var particleCount = Math.floor((Math.random() * 25)) + 5;
-	while( particleCount-- ) {
-		particles.push( new Particle( x,y,122,7,1,random(0, Math.PI * 2),random(0.3,2.5),0.8,0.9, 0.9, 30 ) );
-	}
-}
-
-
-
-function drawParticles() {
-	for (var i=0;i<particles.length;i++) {
-		particles[i].render();
-		particles[i].update();
-	}
-}
-
-function deleteParticle(p) {
-	for (var i=0;i<particles.length;i++) {
-		if (particles[i] == p) {
-			particles.splice(i, 1);
-			break;
-		}
-	}
-}
-//player.js
-
-var player = null;
-
-function Player() {
-	entities.push(this);
+};function Player() {
+	Game.entities.push(this);
 	this.x = 1;
 	this.y = 1;
 	this.layer = 5; //Render the player on top of other entities
 	this.rotation = 0;
 	this.lastUpdate = 0;
-	this.img = new Image();
-	this.img.src = "images/player.png";
+	this.sprite = new Sprite("img/player.png");
 	this.width = 16;
 	this.height = 16;
 	this.scale = 1;
 	this.rotation = 180;
-	this.boundingBox = new BoundingBox(this.x,this.y,this.width,this.height);
+	this.boundingBox = new BoundingBox(this.x, this.y, this.width, this.height);
 }
 
 Player.prototype.update = function() {
-	this.boundingBox.update(this.x+(this.width/2)-18,this.y+(this.height/2)-18);
-	if ((this.lastUpdate - getCurrentMs()) < - 1) { //Updates to do every 1 second
+	this.boundingBox.update(this.x + (this.width / 2) - 18, this.y + (this.height / 2) - 18);
+	if ((this.lastUpdate - getCurrentMs()) < -1) { //Updates to do every 1 second
 
 		this.lastUpdate = getCurrentMs();
 	}
 };
 
 Player.prototype.render = function() {
-	this.rotation = Math.atan2(this.y+screen.yOffset-(this.height/2)-mouse.y+screen.yOffset,this.x+screen.xOffset-(this.width/2)-mouse.x+screen.xOffset)*(180 / Math.PI);
-	if(this.rotation < 0) { this.rotation += 360;}
+	this.rotation = Math.atan2(this.y + Game.screen.yOffset - (this.height / 2) - Game.input.mouse.y, this.x + Game.screen.xOffset - (this.width / 2) - Game.input.mouse.x) * (180 / Math.PI);
+	if (this.rotation < 0) {
+		this.rotation += 360;
+	}
 	this.rotation -= 90;
-	ctx.save();
-	ctx.translate(this.x+screen.xOffset,this.y+screen.yOffset);
-	ctx.rotate(degToRad(this.rotation));
-	ctx.drawImage(this.img, (-(this.img.width/2)), (-(this.img.height/2)), this.img.width*this.scale,this.img.height*this.scale);
-	ctx.restore();
+	this.sprite.rotation = this.rotation;
+	this.sprite.renderOnScreen(this.x, this.y);
 
-	var middlex;
-	var middley;
+	//300 and 225 here are the canvas height/width divided by 2
+	if (this.x > 300 && this.x + 300 < Game.screen.maxXOffset * -1) Game.screen.xOffset = -(this.x - 300);
+	if (this.y > 225 && this.y + 225 < Game.screen.maxYOffset * -1) Game.screen.yOffset = -(this.y - 225);
 
-	if (player.x > 300 && player.x + 300 < screen.maxXOffset * -1) screen.xOffset = -(player.x-300);
-	if (player.y > 225 && player.y + 225 < screen.maxYOffset * -1) screen.yOffset = -(player.y-225);
-
-	if (screen.xOffset > 0) screen.xOffset = 0;
-	if (screen.yOffset > 0) screen.yOffset = 0;
+	if (Game.screen.xOffset > 0) Game.screen.xOffset = 0;
+	if (Game.screen.yOffset > 0) Game.screen.yOffset = 0;
 };
 
 
-Player.prototype.move = function(xm,ym) {
+Player.prototype.move = function(xm, ym) {
 	xm *= 1;
 	ym *= 1;
 
 	var canMove = true;
 	//Collision with solid tiles
-	for (var x=0;x<level.width;x++)
-	{
-		for (var y=0;y<level.height;y++) {
-			if (level.tiles[x][y].solid) {
-				if (this.boundingBox.wouldCollide(xm,ym,level.tiles[x][y])) {
+	for (var x = 0; x < Game.level.width; x++) {
+		for (var y = 0; y < Game.level.height; y++) {
+			if (Game.level.tiles[x][y].solid) {
+				if (this.boundingBox.wouldCollide(xm, ym, Game.level.tiles[x][y])) {
 					canMove = false;
 				}
 			}
 		}
 	}
 	//Collision with entities of type
-	for (var i=0;i<entities.length;i++) {
-		if (entities[i] instanceof Entity) {
-			if (this.boundingBox.wouldCollide(xm,ym,entities[i])) {
+	for (var i = 0; i < Game.entities.length; i++) {
+		if (Game.entities[i] instanceof Entity) {
+			if (this.boundingBox.wouldCollide(xm, ym, Game.entities[i])) {
 				canMove = false;
 			}
 		}
@@ -600,11 +629,10 @@ Player.prototype.move = function(xm,ym) {
 		this.x += xm;
 		this.y += ym;
 	}
-};
-function PlayerSpawn(x,y) {
+};function PlayerSpawn(x, y) {
 	this.x = x;
 	this.y = y;
-	entities.push(this);
+	Game.entities.push(this);
 }
 
 PlayerSpawn.prototype.render = function() {
@@ -612,12 +640,12 @@ PlayerSpawn.prototype.render = function() {
 };
 
 PlayerSpawn.prototype.update = function() {
-	if (game.inGame) {
-		if (player instanceof Player) {
-			player.x = this.x;
-			player.y = this.y;
+	if (Game.inGame) {
+		if (Game.player instanceof Player) {
+			Game.player.x = this.x;
+			Game.player.y = this.y;
 		}
-		deleteEntity(this);
+		Game.deleteEntity(this);
 	}
 };//point.js
 
@@ -638,28 +666,25 @@ Point.prototype.getDist = function(point) {
 
 	return Math.sqrt( xs + ys );
 };
-var screen = null;
-
 function Screen() {
 	this.xOffset = 0;
 	this.yOffset = 0;
-	this.width = gamewidth;
-	this.height = gameheight;
-	this.maxXOffset = level.width * 32 * -1;
-	this.maxYOffset = level.height * 32 * -1;
+	this.width = 600;
+	this.height = 450;
+	this.maxXOffset = Game.level.width * 32 * -1;
+	this.maxYOffset = Game.level.height * 32 * -1;
 }
 
 Screen.prototype.scroll = function() {
-	this.move(0,0);
+	this.move(0, 0);
 };
 
-Screen.prototype.move = function(x,y) {
+Screen.prototype.move = function(x, y) {
 	if (x < 0) {
 		if (this.xOffset + x > this.maxXOffset + this.width) {
 			this.xOffset += x;
 		}
-	}
-	else if (x > 0) {
+	} else if (x > 0) {
 		if (this.xOffset + x < 0) {
 			this.xOffset += x;
 		}
@@ -668,62 +693,145 @@ Screen.prototype.move = function(x,y) {
 		if (this.yOffset + y > this.maxYOffset + this.height) {
 			this.yOffset += y;
 		}
-	}
-	else if (y > 0) {
+	} else if (y > 0) {
 		if (this.yOffset + y < 0) {
 			this.yOffset += y;
 		}
 	}
 };
 
-Screen.prototype.setOffset = function(x,y) {
+Screen.prototype.setOffset = function(x, y) {
 	if (x > this.maxXOffset) x = this.maxXOffset;
 	if (y > this.maxYOffset) y = this.maxYOffset;
 	if (x > 0) x = 0;
 	if (y > 0) y = 0;
 	this.xOffset = x;
 	this.yOffset = y;
+};function Settings() {
+	this.sound = true;
+	this.particles = true;
+}
+
+Settings.prototype.toggle = function(str) {
+
 };//Using audiofx.min.js
 
-if (AudioFX.supported) {
-	var sound = AudioFX('sounds/soundfile', { formats: ['wav'], pool:2, volume:0.5});
-}function Sprite(img) {
+
+function SoundManager() {
+	this.sounds = [{
+		filename: 'sound.wav',
+		name: 'asound'
+	}, {
+		filename: 'sound2.wav',
+		name: 'asound2'
+	}];
+
+	this.totalAssets = 29;
+
+	if (!AudioFX.supported)
+		console.log("Browser does not support AudioFX (likely html5 audio unsupported)");
+}
+
+SoundManager.prototype.load = function() {
+	var onload = function() {
+		Game.loader.assetsLoaded++;
+		console.log("Sound asset loaded");
+	};
+	for (var i = 1; i < this.sounds.length; i++) {
+		this.sounds[i].sound = AudioFX('sounds/' + this.sounds[i].filename, {
+			formats: ['wav'],
+			pool: 2,
+			volume: 0.9
+		}, onload);
+	}
+};
+
+SoundManager.prototype.playSound = function(name) {
+	if (!Game.settings.sound) return;
+	for (var i = 0; i < this.sounds.length; i++) {
+		if (this.sounds[i].name === name) {
+			this.sounds[i].sound.play();
+			return;
+		}
+	}
+};function Sprite(img) {
 	this.img = new Image();
 	this.img.src = img;
 	this.scale = 1;
 	this.xOffset = 0;
 	this.yOffset = 0;
-	this.width = 180;
-	this.height = 327;
+	this.width = 1;
+	this.height = 1;
+	this.rotation = 0;
+	this.frameWidth = 16;
+	this.frameHeight = 16;
 	this.loaded = false;
+	this.rotation = 0;
+	this.alpha = 1;
+	this.fadeAmount = 0;
 	var _this = this;
 	this.img.onload = function() {
 		_this.loaded = true;
-		//0_this.width = _this.img.width;
-		//_this.height = _this.img.height;
+		_this.width = _this.img.width;
+		_this.height = _this.img.height;
 	};
 }
 
-Sprite.prototype.render = function(x,y) {
-	ctx.drawImage(this.img, this.xOffset, this.yOffset, this.width, this.height, x, y, this.width*this.scale, this.width*this.scale);
-	this.xOffset += 180;
-	if (this.xOffset >= 1134) this.xOffset = 0;
+Sprite.prototype.render = function(x, y) {
+	ctx.drawImage(this.img, this.xOffset, this.yOffset, this.width, this.height, x, y, this.width * this.scale, this.width * this.scale);
+};
+Sprite.prototype.renderOnScreen = function(x, y) {
+	//Check if the entity is on Game.screen, and draw if so
+	if (x + Game.screen.xOffset < Game.screen.width && x + Game.screen.xOffset > 0) {
+		if (y + Game.screen.yOffset < Game.screen.height && y + Game.screen.yOffset > 0) {
+			this.drawImage(x + Game.screen.xOffset, y + Game.screen.yOffset);
+		}
+	}
 };
 
-var player = new Entity(1,1);
-player.sprite = new Sprite("img/sprite.png");
-//tile.js
+Sprite.prototype.drawImage = function(x, y) {
+	if (this.fadeAmount !== 0) {
+		this.alpha += this.fadeAmount;
+		if (this.alpha >= 1) {
+			this.fadeAmount = 0;
+			if (this.onFadeIn !== undefined) this.onFadeIn();
+			this.alpha = 1;
+		}
+		if (this.alpha <= 0) {
+			this.fadeAmount = 0;
+			if (this.onFadeOut !== undefined) this.onFadeOut();
+			this.alpha = 0;
+		}
+	}
+	if (this.rotation === 0) {
+		ctx.drawImage(this.img, this.xOffset, this.yOffset, this.frameWidth, this.frameHeight, x, y, this.frameWidth * this.scale, this.frameWidth * this.scale);
+	} else {
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.rotate(degToRad(this.rotation));
+		ctx.globalAlpha = this.alpha;
+		ctx.drawImage(this.img, this.xOffset, this.yOffset, this.frameWidth, this.frameHeight, -this.frameWidth / 2, -this.frameHeight / 2, this.frameWidth * this.scale, this.frameWidth * this.scale);
+		ctx.restore();
+	}
+};
 
-var r=0,g=0,b=0;
-var tileSheet = new Image();
+Sprite.prototype.fadeOut = function(callback) {
+	this.onFadeOut = callback;
+	this.fadeAmount = -0.05;
+};
+
+Sprite.prototype.fadeIn = function(callback) {
+	this.onFadeIn = callback;
+	this.fadeAmount = 0.05;
+};var tileSheet = new Image();
 tileSheet.src = "img/tilesheet.png";
 
 function Tile(x, y, id) {
 	this.x = x;
 	this.y = y;
 	this.id = id;
-	this.boundingBox = new BoundingBox(this.x,this.y,32,32);
-	if (this.id <= 16) this.solid = true; //Specify which tile ID's should be solid here
+	this.boundingBox = new BoundingBox(this.x, this.y, 32, 32);
+	if (this.id > 1) this.solid = true; //Specify which tile ID's should be solid here
 }
 
 Tile.prototype.setColor = function(color) {
@@ -733,16 +841,15 @@ Tile.prototype.setColor = function(color) {
 Tile.prototype.render = function() {
 	var xOffset = ((this.id - 1) % 4) * 32;
 	var yOffset = Math.floor(((this.id - 1) / 4)) * 32;
-	ctx.drawImage(tileSheet,xOffset,yOffset,32,32,this.x+screen.xOffset,this.y+screen.yOffset,32,32);
+	ctx.drawImage(tileSheet, xOffset, yOffset, 32, 32, this.x + Game.screen.xOffset, this.y + Game.screen.yOffset, 32, 32);
 };
 
-function isSolidTile(x,y) {
-	if (level.tiles[x][y] === undefined) return;
-	if (level.tiles[x][y] === null) return;
-	if (level.tiles[x][y].solid) return true;
+function isSolidTile(x, y) {
+	if (Game.level.tiles[x][y] === undefined) return;
+	if (Game.level.tiles[x][y] === null) return;
+	if (Game.level.tiles[x][y].solid) return true;
 	else return false;
-}
-/**
+}/**
  * tmx-loader.js  - A Javascript loader for the TMX File Format.
  *
  * 	Currenty Supports: 
@@ -929,14 +1036,24 @@ tmxloader.load = function(url){
 		 } );
 		 
 }	
-var ui = new UI();
-
 function UI() {
 
 }
 
 UI.prototype.draw = function() {
 
+};
+
+UI.prototype.drawLoadingScreen = function() {
+	ctx.fillStyle = "#000";
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	//ctx.fillText(this.alert, canvas.width/2,canvas.height/4);
+	ctx.textAlign = 'center';
+	ctx.fillStyle = "#FFF";
+	ctx.font = 'normal 20px arial';
+	ctx.fillText("Loading...", canvas.width / 2, canvas.height / 4);
+	ctx.fillRect(130, canvas.height / 3, Game.loader.getLoadPercent() * 3, 30);
+	ctx.fillText(Math.floor(Game.loader.getLoadPercent()) + "%", canvas.width / 2, canvas.height / 2);
 };
 
 UI.prototype.handleInput = function() {

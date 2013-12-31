@@ -1,12 +1,12 @@
 //functions.js
 
 Array.prototype.clean = function(deleteValue) {
-  for (var i = 0; i < this.length; i++) {
-    if (this[i] == deleteValue) {         
-      this.splice(i, 1);
-      i--;
-    }
-  }
+	for (var i = 0; i < this.length; i++) {
+		if (this[i] == deleteValue) {
+			this.splice(i, 1);
+			i--;
+		}
+	}
 };
 
 
@@ -17,18 +17,18 @@ function getCurrentMs() {
 }
 
 function degToRad(angle) {
-  return ((angle*Math.PI) / 180);
+	return ((angle * Math.PI) / 180);
 }
 
 function radToDeg(angle) {
-  return ((angle*180) / Math.PI);
+	return ((angle * 180) / Math.PI);
 }
 
 function random(low, high) {
-  var rand = (Math.random() * high) + low;
-  return rand;
+	var rand = (Math.random() * high) + low;
+	return rand;
 }
 
 function randomInt(low, high) {
-  return (Math.floor((Math.random() * high) + low));
+	return (Math.floor((Math.random() * high) + low));
 }
