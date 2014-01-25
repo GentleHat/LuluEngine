@@ -12,11 +12,12 @@ function Level(num) {
 	this.isFading = false;
 	this.levelTime = 0;
 	this.lastUpdate = 0;
+	this.tileSize = 32;
 
 	for (var x = 0; x < this.width; x++) {
 		this.tiles[x] = [];
 		for (var y = 0; y < this.height; y++) {
-			this.tiles[x][y] = new Tile(x * 32, y * 32, tmxloader.map.layers[0].data[y][x]); //Tile layer
+			this.tiles[x][y] = new Tile(x * this.tileSize, y * this.tileSize, tmxloader.map.layers[0].data[y][x]); //Tile layer
 		}
 	}
 
@@ -39,16 +40,16 @@ Level.prototype.update = function() {
 	}
 };
 
-function renderLevel(level) {
-	for (var x = 0; x < Game.level.width; x++) { //These ifs check to render tiles only on screen based on pixel values of screen size
-		if (x > (((Game.screen.xOffset + 32 - (Game.screen.xOffset % 32)) / 32) * -1) && x < (((Game.screen.xOffset - Game.width - 32 - (Game.screen.xOffset % 32)) / 32) * -1)) {
-			for (var y = 0; y < Game.level.height; y++) {
-				if (y > (((Game.screen.yOffset + 32 - (Game.screen.yOffset % 32)) / 32) * -1) && y < (((Game.screen.yOffset - Game.height - 32 - (Game.screen.yOffset % 32)) / 32) * -1))
-					Game.level.tiles[x][y].render();
+Level.prototype.render = function() {
+	for (var x = 0; x < this.width; x++) { //These ifs check to render tiles only on screen based on pixel values of screen size
+		if (x > (((Game.screen.xOffset + this.tileSize - (Game.screen.xOffset % this.tileSize)) / this.tileSize) * -1) && x < (((Game.screen.xOffset - Game.width - this.tileSize - (Game.screen.xOffset % this.tileSize)) / this.tileSize) * -1)) {
+			for (var y = 0; y < this.height; y++) {
+				if (y > (((Game.screen.yOffset + this.tileSize - (Game.screen.yOffset % this.tileSize)) / this.tileSize) * -1) && y < (((Game.screen.yOffset - Game.height - this.tileSize - (Game.screen.yOffset % this.tileSize)) / this.tileSize) * -1))
+					this.tiles[x][y].render();
 			}
 		}
 	}
-}
+};
 
 Level.prototype.update = function() {
 	if (getCurrentMs() - this.lastUpdate > 1) {
