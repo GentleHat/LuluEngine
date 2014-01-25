@@ -16,14 +16,15 @@ $(document).ready(function() {
 		$(window).focus();
 	}
 
-	Game = new GameEngine();
+	Game = new GameEngine(600, 450);
 	Game.loader.load();
-	loop();
+	Game.loop();
 	Game.start();
 });
 
-
-function GameEngine() {
+function GameEngine(width, height) {
+	this.width = width;
+	this.height = height;
 	this.settings = new Settings();
 	this.ui = new UI();
 	this.loader = new AssetLoader();

@@ -41,9 +41,9 @@ Level.prototype.update = function() {
 
 function renderLevel(level) {
 	for (var x = 0; x < Game.level.width; x++) { //These ifs check to render tiles only on screen based on pixel values of screen size
-		if (x > (((Game.screen.xOffset + 32 - (Game.screen.xOffset % 32)) / 32) * -1) && x < (((Game.screen.xOffset - 600 - 32 - (Game.screen.xOffset % 32)) / 32) * -1)) {
+		if (x > (((Game.screen.xOffset + 32 - (Game.screen.xOffset % 32)) / 32) * -1) && x < (((Game.screen.xOffset - Game.width - 32 - (Game.screen.xOffset % 32)) / 32) * -1)) {
 			for (var y = 0; y < Game.level.height; y++) {
-				if (y > (((Game.screen.yOffset + 32 - (Game.screen.yOffset % 32)) / 32) * -1) && y < (((Game.screen.yOffset - 450 - 32 - (Game.screen.yOffset % 32)) / 32) * -1))
+				if (y > (((Game.screen.yOffset + 32 - (Game.screen.yOffset % 32)) / 32) * -1) && y < (((Game.screen.yOffset - Game.height - 32 - (Game.screen.yOffset % 32)) / 32) * -1))
 					Game.level.tiles[x][y].render();
 			}
 		}

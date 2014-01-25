@@ -1,11 +1,15 @@
 function Screen() {
 	this.xOffset = 0;
 	this.yOffset = 0;
-	this.width = 600;
-	this.height = 450;
-	this.maxXOffset = Game.level.width * 32 * -1;
-	this.maxYOffset = Game.level.height * 32 * -1;
+	this.width = Game.width;
+	this.height = Game.height;
+	this.maxXOffset = (Game.level.width * 32) * -1;
+	this.maxYOffset = (Game.level.height * 32) * -1;
 }
+
+Screen.prototype.update = function() {
+	this.addKick();
+};
 
 Screen.prototype.scroll = function() {
 	this.move(0, 0);
@@ -32,11 +36,10 @@ Screen.prototype.move = function(x, y) {
 	}
 };
 
-Screen.prototype.setOffset = function(x, y) {
-	if (x > this.maxXOffset) x = this.maxXOffset;
-	if (y > this.maxYOffset) y = this.maxYOffset;
-	if (x > 0) x = 0;
-	if (y > 0) y = 0;
+Screen.prototype.setXOffset = function(x) {
 	this.xOffset = x;
+};
+
+Screen.prototype.setYOffset = function(y) {
 	this.yOffset = y;
 };

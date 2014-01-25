@@ -30,12 +30,13 @@ Player.prototype.render = function() {
 	this.sprite.rotation = this.rotation;
 	this.sprite.renderOnScreen(this.x, this.y);
 
-	//300 and 225 here are the canvas height/width divided by 2
-	if (this.x > 300 && this.x + 300 < Game.screen.maxXOffset * -1) Game.screen.xOffset = -(this.x - 300);
-	if (this.y > 225 && this.y + 225 < Game.screen.maxYOffset * -1) Game.screen.yOffset = -(this.y - 225);
+	if (this.x + (Game.width / 2) <= Game.screen.maxXOffset * -1) Game.screen.setXOffset(-(this.x - (Game.width / 2)));
+	else Game.screen.setXOffset((Game.screen.maxXOffset) + (Game.screen.width));
+	if (this.y + (Game.height / 2) <= Game.screen.maxYOffset * -1) Game.screen.setYOffset(-(this.y - (Game.height / 2)));
+	else Game.screen.setYOffset((Game.screen.maxYOffset) + (Game.screen.height));
 
-	if (Game.screen.xOffset > 0) Game.screen.xOffset = 0;
-	if (Game.screen.yOffset > 0) Game.screen.yOffset = 0;
+	if (Game.screen.xOffset > 0) Game.screen.setXOffset(0);
+	if (Game.screen.yOffset > 0) Game.screen.setYOffset(0);
 };
 
 

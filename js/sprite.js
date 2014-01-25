@@ -48,7 +48,7 @@ Sprite.prototype.drawImage = function(x, y) {
 		}
 	}
 	if (this.rotation === 0) {
-		ctx.drawImage(this.img, this.xOffset, this.yOffset, this.frameWidth, this.frameHeight, x, y, this.frameWidth * this.scale, this.frameWidth * this.scale);
+		ctx.drawImage(this.img, this.xOffset, this.yOffset, this.frameWidth, this.frameHeight, x, y, this.frameWidth * this.scale, this.frameHeight * this.scale);
 	} else {
 		ctx.save();
 		ctx.translate(x, y);
