@@ -36,7 +36,7 @@ function GameEngine(width, height) {
 	this.input = new InputManager();
 	this.currentLevel = 1;
 	this.inGame = true; //Are we physically in the game level
-	this.inMenu = false;
+	this.mainMenu = new MainMenu();
 	this.loaded = false;
 	this.entities = [];
 }
@@ -51,7 +51,6 @@ GameEngine.prototype.toggleParticles = function() {
 GameEngine.prototype.start = function() {
 	this.started = true;
 	this.inGame = true;
-	this.inMenu = false;
 	this.level = new Level(this.currentLevel);
 	this.level.fadeIn();
 	this.player = new Player();
@@ -61,7 +60,6 @@ GameEngine.prototype.start = function() {
 GameEngine.prototype.end = function() {
 	this.started = false;
 	this.level = null;
-	this.inMenu = true;
 	this.entities = [];
 	this.player = null;
 	this.screen = null;
@@ -98,7 +96,13 @@ GameEngine.prototype.render = function() {
 			return;
 		}
 	}
+	if (this.mainMenu.inMenu) {
+		this.mainMenu.update();
+		this.mainMenu.render();
+		return;
+	}
 	if (this.screen === null || this.screen === undefined) return;
+
 	ctx.restore();
 	ctx.fillStyle = "rgba(44, 0, 0)";
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
