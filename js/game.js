@@ -36,7 +36,7 @@ function GameEngine(width, height) {
 	this.input = new InputManager();
 	this.currentLevel = 1;
 	this.inGame = true; //Are we physically in the game level
-	this.mainMenu = new MainMenu();
+	this.mainMenu = null;
 	this.loaded = false;
 	this.entities = [];
 }
@@ -49,6 +49,7 @@ GameEngine.prototype.toggleParticles = function() {
 	else this.settings.particles = true;
 };
 GameEngine.prototype.start = function() {
+	this.mainMenu = new MainMenu();
 	this.started = true;
 	this.inGame = true;
 	this.level = new Level(this.currentLevel);
